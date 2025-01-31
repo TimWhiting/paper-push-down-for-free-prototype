@@ -1,11 +1,12 @@
 package org.ucombinator.cfa
 
-import org.ucombinator.scheme.transform.ANormalizer
-import org.ucombinator.scheme.parsing.RnRSParser
-import org.ucombinator.util._
 import org.ucombinator.scheme.cfa.kcfa.KCFAAnalysisRunner
 import org.ucombinator.scheme.cfa.pdcfa.PDCFAAnalysisRunner
-import AnalysisType._
+import org.ucombinator.scheme.parsing.RnRSParser
+import org.ucombinator.scheme.transform.ANormalizer
+import org.ucombinator.util.*
+
+import AnalysisType.*
 
 /**
  * @author Ilya Sergey
@@ -40,7 +41,6 @@ object RunCFA {
 
 
   def main(args: Array[String]) : Unit = {
-
     val opts = CFAOptions.parse(args)
 
     if args.size == 0 || opts.help then {

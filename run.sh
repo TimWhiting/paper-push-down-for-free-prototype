@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 for k in 0 1
 do
   for policy in "p4f" "aac"
@@ -11,7 +10,8 @@ do
     for benchmark in $(cat benchmarks.txt)
     do
       ls $benchmark
-      scala -J-Xmx4g -J-Xss256m -cp target/scala-3.6.3/classes org.ucombinator.cfa.RunCFA --kcfa --k $k --kalloc $policy $benchmark 2>&1
+      # 
+      sbt -J-Xmx4g -J-Xss256m "runMain org.ucombinator.cfa.RunCFA --kcfa --k $k --kalloc $policy $benchmark" 2>&1
     done
   done
 done
