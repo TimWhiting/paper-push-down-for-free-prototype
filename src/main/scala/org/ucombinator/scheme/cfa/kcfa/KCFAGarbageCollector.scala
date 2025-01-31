@@ -63,7 +63,7 @@ trait KCFAGarbageCollector extends SchemeGarbageCollector {
     }
 
     val newWorkSet = workset ++ newKPtrs
-    if (newWorkSet == workset) {
+    if newWorkSet == workset then {
       //      println(newWorkSet.size)
       //      println(kstore.keys.size)
       //      println("-----")

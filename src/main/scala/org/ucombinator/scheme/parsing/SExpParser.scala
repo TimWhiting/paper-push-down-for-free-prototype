@@ -94,7 +94,7 @@ class SExpParser extends RegexParsers {
   private def sexp: Parser[SExp] = positioned(nil | sxlist | integer | sboolean | keyword | schar | text | symbol | special)
 
   private def sexplist: Parser[SExp] =
-    rep(sexp) ~ (("." ~ sexp) ?) ^^ {
+    rep(sexp) ~ (("." ~ sexp).?) ^^ {
       case sexps ~ Some("." ~ sexp) => SExp(sexps, sexp)
       case sexps ~ None => SExp(sexps)
     }
@@ -104,7 +104,7 @@ class SExpParser extends RegexParsers {
   def parseAll(input: String): List[SExp] = {
     val result = parse(phrase(rep(sexp)), input)
 
-    if (result.successful)
+    if result.successful then
       result.get
     else {
       throw new Exception("Parsing failed at position " + result.next.pos + ";\n character: '" + result.next.first + "';\n at end: " + result.next.atEnd)

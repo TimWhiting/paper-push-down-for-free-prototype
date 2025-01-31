@@ -147,7 +147,7 @@ final case class SText(val value: String) extends SExp {
 
 
 case class SBoolean(val value: Boolean) extends SExp {
-  override def toString = (if (value) {
+  override def toString = (if value then {
     "#t"
   } else {
     "#f"
@@ -218,7 +218,7 @@ final case class SName(s: String, version: Int) extends SSymbol(s) with Ordered[
   def compare(that: SName): Int = that match {
     case SName(s2, v2) => {
       val cmpString = s compare s2
-      if (cmpString != 0)
+      if cmpString != 0 then
         cmpString
       else
         version compare v2
@@ -226,10 +226,10 @@ final case class SName(s: String, version: Int) extends SSymbol(s) with Ordered[
   }
 
   override def toString =
-    if (version == 0) {
+    if version == 0 then {
       string
     } else {
-      if (SExp.shouldNamesBeSymbols)
+      if SExp.shouldNamesBeSymbols then
         s + "$" + version
       else
         "#name[" + string + " " + version + "]"
@@ -256,7 +256,7 @@ final case class SName(s: String, version: Int) extends SSymbol(s) with Ordered[
   override def hashCode: Int = s.hashCode() * 10 + version
 
   override def equals(a: Any) = a match {
-    case SName(s2, v2) => (s equals s2) && (version == v2)
+    case SName(s2, v2) => (s `equals` s2) && (version == v2)
     case _ => false
   }
 }
@@ -317,8 +317,8 @@ object SList {
     SExp(sx.toList)
 
   def unapplySeq(sx: SExp): Option[List[SExp]] = {
-    if (sx isList)
-      Some(sx toList)
+    if sx.isList then
+      Some(sx.toList)
     else
       None
   }

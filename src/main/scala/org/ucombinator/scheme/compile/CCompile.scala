@@ -16,14 +16,14 @@ class CPSEmitC {
 
   private def mangle(string: String): String = {
     var s = "";
-    for (c <- string) {
+    for c <- string do {
       // println("mangling: " + c)  // DEBUG
       // println("isLoD:    " + Character.isLetterOrDigit(c)) // DEBUG
       s += (c match {
         case _ if Character.isLetterOrDigit(c) => c.toString
         case _ => {
           // println("MANGLING") // DEBUG
-          "_" + c toInt
+          "_" + c.toInt
         }
       })
     }
@@ -38,19 +38,19 @@ class CPSEmitC {
 
   private def mangle(kw: SKeyword): String = "__kw_" + mangle(kw.string)
 
-  private def emit(s: String) {
+  private def emit(s: String) = {
     print(s)
   }
 
 
-  private def emitln(s: String) {
+  private def emitln(s: String) = {
     emit(s);
     emit("\n");
   }
 
-  private def emitDeclarations(prog: Program) {
+  private def emitDeclarations(prog: Program) = {
     emitln("\n /* Declarations: */ ");
-    for (v <- prog.variables) {
+    for v <- prog.variables do {
       emitln(" Value " + mangle(v) + ";");
     }
     emitln("");
@@ -65,20 +65,20 @@ class CPSEmitC {
     */
   }
 
-  private def emitInitialization(prog: Program) {
+  private def emitInitialization(prog: Program) = {
     // Emit non-lambda global variable initialization code.
 
     // Emit jump to init.
     emitln(" goto __INIT ;");
   }
 
-  private def emitProgramBody(prog: Program) {
+  private def emitProgramBody(prog: Program) = {
     // Emit labels.
 
     emitln("\n /* Program body: */");
     prog match {
       case Program(_, defs, init) => {
-        for (d <- defs) {
+        for d <- defs do {
           d match {
             case VarDef(name, lam: Lambda) => {
               emitln("\n " + mangle(name) + ": ");
@@ -111,7 +111,7 @@ class CPSEmitC {
       case Formals(forms, rest) => {
         var i = 1;
 
-        for (f <- forms) {
+        for f <- forms do {
           f match {
             case PosFormal(name) => {
               emitln("  " + mangle(name) + " = " + "__a" + i + ";")
@@ -122,7 +122,7 @@ class CPSEmitC {
             }
           }
         }
-        if (!rest.isEmpty) {
+        if !rest.isEmpty then {
           throw new Exception("Handle rest parameters")
         }
       }
@@ -130,7 +130,7 @@ class CPSEmitC {
   }
 
 
-  private def emitCall(call: Exp) {
+  private def emitCall(call: Exp) : Unit = {
     // Emit a call.
     call match {
       case App(Ref(f), args) => {
@@ -191,15 +191,15 @@ class CPSEmitC {
     }
   }
 
-  def emitAssignment(name: SName, value: Exp) {
+  def emitAssignment(name: SName, value: Exp) = {
     emitln("  " + mangle(name) + " = " + compile(value) + ";");
   }
 
-  def emitArguments(arguments: Arguments) {
+  def emitArguments(arguments: Arguments) = {
     arguments match {
       case Arguments(args, rest) => {
         var i = 1;
-        for (a <- args) {
+        for a <- args do {
           a match {
             case PosArgument(e) => {
               emitln("  __a" + i + " = " + compile(e) + ";")
@@ -219,11 +219,11 @@ class CPSEmitC {
     }
   }
 
-  def emitArgumentRegisters(prog: Program) {
-    for (i <- 1 to 10) {
+  def emitArgumentRegisters(prog: Program) = {
+    for i <- 1 to 10 do {
       emitln(" Value __a" + i + ";")
     }
-    for (kw <- prog.keywords) {
+    for kw <- prog.keywords do {
       emitln(" Value " + mangle(kw) + ";");
     }
     //for (v <- prog.variables) {
@@ -300,13 +300,13 @@ class CPSEmitC {
 
   private var typeCodes: scala.collection.mutable.Map[SName, Int] = null
 
-  private def emitTypeCodes() {
+  private def emitTypeCodes() = {
     typeCodes = scala.collection.mutable.HashMap[SName, Int]()
 
     var i = 0
     prog match {
       case Program(decs, defs, init) => {
-        for (d <- decs) {
+        for d <- decs do {
           d match {
             case TypeDec(name, ty) => {
               emitln("unsigned int " + mangle("ty_", name) + " = " + (STRUCT_START + i) + ";");
@@ -319,7 +319,7 @@ class CPSEmitC {
   }
 
 
-  def apply(prog: Program) {
+  def apply(prog: Program) = {
     this.prog = prog;
 
     emitln("#include \"scheme-cps.h\"\n\n");
@@ -342,17 +342,17 @@ class CPSEmitC {
 
 object CCompile {
 
-  private def write(file: java.io.File, contents: String) {
+  private def write(file: java.io.File, contents: String) : Unit = {
     val fw = new java.io.FileWriter(file);
     fw.write(contents);
     fw.close()
   }
 
-  private def write(fileName: String, contents: String) {
+  private def write(fileName: String, contents: String) : Unit = {
     write(new java.io.File(fileName), contents)
   }
 
-  def main(args: Array[String]) {
+  def main(args: Array[String]) = {
 
     /*
 
@@ -378,7 +378,7 @@ object CCompile {
 
     var sexps: List[SExp] = Nil
 
-    if (filename == "-") {
+    if filename == "-" then {
       sexps = SExp.parseAll(scala.io.Source.fromInputStream(System.in).getLines mkString "")
     } else {
       sexps = SExp.parseAllIn(filename)

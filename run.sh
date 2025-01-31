@@ -11,7 +11,7 @@ do
     for benchmark in $(cat benchmarks.txt)
     do
       ls $benchmark
-      scala -J-Xmx4g -J-Xss256m -cp target/scala-2.11/classes org.ucombinator.cfa.RunCFA --kcfa --k $k --kalloc $policy $benchmark 2>&1
+      scala -J-Xmx4g -J-Xss256m -cp target/scala-3.6.3/classes org.ucombinator.cfa.RunCFA --kcfa --k $k --kalloc $policy $benchmark 2>&1
     done
   done
 done

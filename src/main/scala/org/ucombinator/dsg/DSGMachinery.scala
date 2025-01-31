@@ -9,7 +9,7 @@ import org.ucombinator.util.{StringUtils, FancyOutput}
  * @author Ilya Sergey
  */
 trait DSGMachinery {
-  self: GCInterface with FancyOutput =>
+  self: GCInterface & FancyOutput =>
 
   val halfHour = 60000 * 30
 
@@ -77,10 +77,10 @@ trait DSGMachinery {
 
       val currentTime = (new java.util.Date()).getTime
 
-      if (!shouldProceed) {
+      if !shouldProceed then {
         (next, helper, store)
-      } else if (interrupt && next.edges.size > interruptAfter
-      || (currentTime - startTime) >= halfHour) {
+      } else if interrupt && next.edges.size > interruptAfter
+      || (currentTime - startTime) >= halfHour then {
         (next, helper, store)
       } else {
         val (next2, helper2, goAgain, newToVisit, newStore) = iterateDSG(next, helper, statesToVisit, store)
@@ -104,19 +104,19 @@ trait DSGMachinery {
   private def iterateDSG(dsg: DSG, helper: NewDSGHelper, toVisit: Set[S], store: SharedStore): (DSG, NewDSGHelper, Boolean, Set[S], SharedStore) = dsg match {
     case DSG(ss, ee, s0) => {
 
-      val newNodesEdgesStores: Set[(S, Edge, SharedStore)] = for {
+      val newNodesEdgesStores: Set[(S, Edge, SharedStore)] = for
         s <- toVisit
         kont <- helper.getRequiredKont(s, s0)
         possibleFrames = helper.getPossibleStackFrames(s)
         (g, s1, littleStore) <- step(s, kont, possibleFrames, store)
-      } yield (s1, Edge(s, g, s1), littleStore)
+      yield (s1, Edge(s, g, s1), littleStore)
 
       val (obtainedStates, obtainedEdges, obtainedStores) = newNodesEdgesStores.unzip3
 
       // Transform switch edges to pairs of push/pop edges
-      val noSwitchesEdges: Edges = if (canHaveSwitchFrames) processSwitchEdges(obtainedEdges) else obtainedEdges
+      val noSwitchesEdges: Edges = if canHaveSwitchFrames then processSwitchEdges(obtainedEdges) else obtainedEdges
       // Collect new states after decoupling switches
-      val newStates: Nodes = (if (canHaveSwitchFrames) {
+      val newStates: Nodes = (if canHaveSwitchFrames then {
         val nodes: Set[S] = (noSwitchesEdges -- ee).map {
           case Edge(source, _, target) => target
         }
@@ -172,8 +172,8 @@ trait DSGMachinery {
 
     ////////////////// Public methods //////////////////
 
-    def update(newEdges: Set[Edge]) {
-      for (e <- newEdges) {
+    def update(newEdges: Set[Edge]) = {
+      for e <- newEdges do {
         e match {
           case Edge(s1, Eps, s2) => equalize(s1, s2)
           case Edge(s1, Pop(f), s2) => processPop(s1, f, s2)
@@ -188,10 +188,10 @@ trait DSGMachinery {
      */
     def getRequiredKont(s: S, s0: S): Set[Kont] = {
       val frames = gets(topFrames, s)
-      if (frames.isEmpty) {
+      if frames.isEmpty then {
         Set(List())
       } else {
-        if (mustHaveOnlyEmptyContinuation(s)) {
+        if mustHaveOnlyEmptyContinuation(s) then {
           Set(List())
 
           /**
@@ -200,8 +200,8 @@ trait DSGMachinery {
            * Should carry a value and be epsilon-reachable
            * from the initial state
            */
-        } else if (canHaveEmptyContinuation(s)
-          && (getEpsPredStates(s)).contains(s0)) {
+        } else if canHaveEmptyContinuation(s)
+          && (getEpsPredStates(s)).contains(s0) then {
           frames.map(f => List(f)) + List()
         } else {
           frames.map(f => List(f))
@@ -222,18 +222,18 @@ trait DSGMachinery {
      * "Equalize" eps-predecessors & eps-successors
      * when an eps-transition s1 --[eps]--> s2 is added
      */
-    private def equalize(s1: S, s2: S) {
+    private def equalize(s1: S, s2: S) = {
       val preds = Set(s1) ++ gets(epsPreds, s1)
       val nexts = Set(s2) ++ gets(epsSuccs, s2)
 
       // Add new successors
-      for (s <- preds) {
+      for s <- preds do {
         puts(epsSuccs, s, nexts)
       }
 
       // Add new predecessors and top frames
       val topFramesToAdd = preds.flatMap(x => gets(topFrames, x))
-      for (s <- nexts) {
+      for s <- nexts do {
 
         // update eps-predecessors
         puts(epsPreds, s, preds)
@@ -242,7 +242,7 @@ trait DSGMachinery {
         puts(topFrames, s, topFramesToAdd)
 
         // update immediate non-esp predecessors
-        for (f <- gets(topFrames, s1)) {
+        for f <- gets(topFrames, s1) do {
           val predForPushForS1 = gets(predStateForPushFrame, (s1, f))
           puts(predStateForPushFrame, (s, f), predForPushForS1)
         }
@@ -252,11 +252,11 @@ trait DSGMachinery {
       }
     }
 
-    def updatePossibleStackFrames(s: S) {
+    def updatePossibleStackFrames(s: S) = {
       val possibleAsTop = gets(topFrames, s)
       puts(possibleStackFrames, s, possibleAsTop)
       // for all non-eps predecessors of s
-      for (spred <- gets(nonEpsPreds, s) ++ gets(epsPreds, s)) {
+      for spred <- gets(nonEpsPreds, s) ++ gets(epsPreds, s) do {
         // see what are their possible stack-frames
         val newPossibleStackFrames = gets(possibleStackFrames, spred)
         // add them to possible stack frames of s
@@ -267,9 +267,9 @@ trait DSGMachinery {
     /**
      * Update topFrames and predForPushFrames for a new edge s1 --[+f]--> s2
      */
-    private def processPush(s1: S, f: Frame, s2: S) {
+    private def processPush(s1: S, f: Frame, s2: S) = {
       val nexts = Set(s2) ++ gets(epsSuccs, s2)
-      for (s <- nexts) {
+      for s <- nexts do {
         puts(topFrames, s, Set(f))
         puts(predStateForPushFrame, (s, f), Set(s1))
         puts(nonEpsPreds, s, Set(s1))
@@ -278,11 +278,11 @@ trait DSGMachinery {
     }
 
     /**
-     * Update eps-graphs for a new egde s1 --[-f]--> s2
+     * Update eps-graphs for a new edge s1 --[-f]--> s2
      */
-    private def processPop(s1: S, f: Frame, s2: S) {
+    private def processPop(s1: S, f: Frame, s2: S) = {
       val newEpsPreds = gets(predStateForPushFrame, (s1, f))
-      for (s <- newEpsPreds) {
+      for s <- newEpsPreds do {
         equalize(s, s2)
       }
     }
@@ -290,7 +290,7 @@ trait DSGMachinery {
     /**
      * Utility function for multimaps
      */
-    private def puts[A, B](map: MMap[A, Set[B]], key: A, newVals: Set[B]) {
+    private def puts[A, B](map: MMap[A, Set[B]], key: A, newVals: Set[B]) = {
       val oldVals = map.getOrElse(key, Set())
       val values = oldVals ++ newVals
       map += ((key, values))

@@ -4,19 +4,19 @@ class SentinelStore[A, B](updates: List[StoreUpdate[A, B]], val store: Store[A, 
 
   def this(store: Store[A, B]) = this(List(), store)
 
-  def get(addr: A) = store get addr
+  def get(addr: A) = store.get(addr)
 
   def wt(that: Store[A, B]) = that match {
-    case thatStore: SentinelStore[A, B] => store wt thatStore.store
-    case _ => store wt that
+    case thatStore: SentinelStore[A, B] => store.wt(thatStore.store)
+    case _ => store.wt(that)
   }
 
-  def +(addr: A, d: Set[B]): SentinelStore[A, B] = (store get addr) match {
+  def +(addr: A, d: Set[B]): SentinelStore[A, B] = (store.get(addr)) match {
     case Some(d2) if (d subsetOf d2) => this
     case _ => new SentinelStore(StoreUpdate(false, addr, d) :: updates, store +(addr, d))
   }
 
-  def update(addr: A, d: Set[B]): SentinelStore[A, B] = (store get addr) match {
+  def update(addr: A, d: Set[B]): SentinelStore[A, B] = (store.get(addr)) match {
     case Some(d2) if (d subsetOf d2) => this
     case _ => new SentinelStore(StoreUpdate[A, B](true, addr, d) :: updates, store(addr) = d)
   }

@@ -8,8 +8,8 @@ import java.io.File
 object StringUtils {
 
   def truncateIfLong(s: String, l: Int): String = {
-    if (s == null || l <= 0) s
-    else if (s.length() <= l) s
+    if s == null || l <= 0 then s
+    else if s.length() <= l then s
     else s.take(l) + "..."
   }
 
@@ -18,7 +18,7 @@ object StringUtils {
     import File.separator
 
     def trimInternal(name: String) = {
-      if (name == null || !name.contains(".") || name.startsWith(".")) {
+      if name == null || !name.contains(".") || name.startsWith(".") then {
         name
       } else {
         name.substring(0, name.indexOf("."))
@@ -27,7 +27,7 @@ object StringUtils {
 
     val nName = trimInternal(filename)
 
-    if (nName == null || !nName.contains(separator) || nName.endsWith(separator)) {
+    if nName == null || !nName.contains(separator) || nName.endsWith(separator) then {
       nName
     } else {
       nName.substring(nName.lastIndexOf(separator) + 1)

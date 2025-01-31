@@ -35,20 +35,20 @@ object RunCFA {
     --interrupt-after n    interrupts the analysis after n states computed (default = off)
     --help                 print this message
     --verbose              print additional information on the analysis and results
-    filePath               path to a file to be analysed
+    filePath               path to a file to be analyzed
     """)
 
 
-  def main(args: Array[String]) {
+  def main(args: Array[String]) : Unit = {
 
     val opts = CFAOptions.parse(args)
 
-    if (args.size == 0 || opts.help) {
+    if args.size == 0 || opts.help then {
       println(helpMessage)
       return
     }
 
-    if (opts.fileName == null) {
+    if opts.fileName == null then {
       println()
       System.err.println("Please, specify a filename to process")
       println()
@@ -59,31 +59,31 @@ object RunCFA {
     import org.ucombinator.scheme.syntax._
 
     val filename = opts.fileName
-    if (opts.verbose) {
+    if opts.verbose then {
       System.err.print("Parsing s-expressions...")
     }
     val sexps = SExp.parseAllIn(filename)
-    if (opts.verbose) {
+    if opts.verbose then {
       System.err.println("done")
     }
 
-    if (opts.verbose) {
-      System.err.print("Bulding AST...")
+    if opts.verbose then {
+      System.err.print("Building AST...")
     }
     val ast = RnRSParser(sexps)
-    if (opts.verbose) {
+    if opts.verbose then {
       System.err.println("done")
     }
 
-    if (opts.verbose) {
+    if opts.verbose then {
       System.err.print("A-normalizing...")
     }
     val anast: Exp = ANormalizer(ast)
-    if (opts.verbose) {
+    if opts.verbose then {
       System.err.println("done")
     }
 
-    if (opts.verbose) {
+    if opts.verbose then {
       System.out.println("Input program:")
       System.out.println(ast)
       System.out.println("\n")

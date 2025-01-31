@@ -11,7 +11,7 @@ import org.ucombinator.util.{FancyOutput, CFAOptions}
 abstract class SchemeCFARunner(opts: CFAOptions) extends AnalysisRunner(opts) with StateSpace with FancyOutput {
 
   def prettyPrintState(state: ControlState, map: Map[ControlState, Int]): String = {
-    val result: String = if (simplify) {
+    val result: String = if simplify then {
       map.get(state) match {
         case Some(n) => n.toString
         case None => "..."
@@ -75,10 +75,10 @@ abstract class SchemeCFARunner(opts: CFAOptions) extends AnalysisRunner(opts) wi
     // Mapping variables to values
     var varValMap: Var :-> Set[Val] = Map.empty
 
-    for {
+    for
       s <- allStores
       (v, ax) <- globalVarAddrMap
-    } {
+    do {
       val newValues: Set[Val] = ax.map(addr => s.getOrElse(addr, Set())).flatten[Val]
       val oldValues: Set[Val] = varValMap.getOrElse(v, Set())
       val newVarValMap: Var :-> Set[Val] = varValMap + ((v, newValues ++ oldValues))

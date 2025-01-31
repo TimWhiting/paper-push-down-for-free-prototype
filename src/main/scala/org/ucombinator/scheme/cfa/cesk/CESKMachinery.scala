@@ -30,12 +30,12 @@ trait CESKMachinery extends StateSpace with PrimOperators {
    * 3. Unspecified
    */
   def atomicEval(e: Exp, rho: Env, s: Store): Set[Val] = {
-    if (!isAtomic(e)) {
+    if !isAtomic(e) then {
       throw new CESKException("Not an atomic expression: " + e.toString)
     } else e match {
       case BadExp => Set.empty
-      case PairExp(e1, e2) => for (x <- atomicEval(e1, rho, s);
-                                   y <- atomicEval(e2, rho, s)) yield PairLit(x, y)
+      case PairExp(e1, e2) => for x <- atomicEval(e1, rho, s);
+                                   y <- atomicEval(e2, rho, s) yield PairLit(x, y)
       case lam@Lambda(_, _) => Set(Clo(lam, rho))
       case Ref(name) => lookupStore(s, lookupEnv(rho, name))
       case Prim(prim, b) => Set(PrimLit(prim, b))
@@ -68,7 +68,7 @@ trait CESKMachinery extends StateSpace with PrimOperators {
           }
         }
       }
-      case _ => throw new CESKException("Unexpected atomic expresssion: " + e.toString)
+      case _ => throw new CESKException("Unexpected atomic expression: " + e.toString)
     }
   }
 
@@ -84,14 +84,14 @@ trait CESKMachinery extends StateSpace with PrimOperators {
     case SelfLit(SInt(i)) => true
     case NumTopExp => true
     case BadExp => true
-    case _ : AbstractNumLit => true
+    // case _ : AbstractNumLit => true
     case (App(Prim(_, _), Arguments(args, _))) => args.forall(arg => isAtomic(arg.exp))
     case _ => false
   }
 
 
   def getBooleanValues(ae: Exp, rho: Env, s: Store): Set[Boolean] = {
-    if (!isAtomic(ae)) {
+    if !isAtomic(ae) then {
       throw new CESKException("Not an atomic expression: " + ae.toString)
     } else {
       val vals = atomicEval(ae, rho, s)
@@ -102,7 +102,7 @@ trait CESKMachinery extends StateSpace with PrimOperators {
     }
   }
 
-  def analyseResult(r: Val, rho: Env, s: Store, e: Exp, kptr: KAddr): ControlState = r match {
+  def analyzeResult(r: Val, rho: Env, s: Store, e: Exp, kptr: KAddr): ControlState = r match {
     case BadVal => ErrorState(e, "Bad value in expression " + e)
     case _ => PState(embedValueToExp(r), rho, s, kptr)
   }
@@ -126,9 +126,9 @@ trait CESKMachinery extends StateSpace with PrimOperators {
   def getLambdaBodyInANF(lam: Lambda): Exp = {
     val Lambda(_, b) = lam
     val exps = b.exps
-    if (exps.size != 1) {
+    if exps.size != 1 then {
       throw new CESKException("Unexpected number (" + exps.size +
-        ") of expressions in ANF at the folowing lambda:\n" +
+        ") of expressions in ANF at the following lambda:\n" +
         lam.toString)
     } else {
       exps.head
@@ -138,14 +138,14 @@ trait CESKMachinery extends StateSpace with PrimOperators {
   def decomposeLetInANF(let: Let): (Var, Exp, Exp) = let match {
     case Let(bs, body) => {
       val binds = bs.bindings
-      if (binds.size != 1) {
+      if binds.size != 1 then {
         throw new CESKException("Wrong number of bindings in let-expression [ANF]: " + let.toString)
       }
       val Binding(v, e) = binds.head
       val exps = body.exps
-      if (exps.size == 0) {
+      if exps.size == 0 then {
         throw new CESKException("Unexpectedly no expressions in a let-expression [ANF]:\n" + let.toString)
-      } else if (exps.size > 1) {
+      } else if exps.size > 1 then {
         throw new CESKException("More than one expression in the body of a let-expression [ANF]:\n" + let.toString)
       } else {
         (v, e, exps.head)

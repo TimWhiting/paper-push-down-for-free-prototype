@@ -58,7 +58,7 @@ class MutableVariableEliminator extends ProgramTransformer {
       case _: Prim => exp
 
       case Ref(name) if prog.mutables contains name => {
-        if ((prog.globals contains name) && !prog.valueOfGlobal(name).isLambda)
+        if (prog.globals contains name) && !prog.valueOfGlobal(name).isLambda then
           exp
         else
           CellGet(exp)
@@ -86,7 +86,7 @@ class MutableVariableEliminator extends ProgramTransformer {
       }
 
       case MakeStruct(ty, values) => {
-        MakeStruct(ty, values map this.apply)
+        MakeStruct(ty, values.map(this.apply))
       }
       case StructGet(base, field, ty) => {
         StructGet(this(base), field, ty)
@@ -96,8 +96,8 @@ class MutableVariableEliminator extends ProgramTransformer {
         Begin(this(body))
       }
 
-      case App(f, args) => App(this(f), args map this.apply)
-      case Call(f, key, args) => Call(this(f), key, args map this.apply)
+      case App(f, args) => App(this(f), args.map(this.apply))
+      case Call(f, key, args) => Call(this(f), key, args.map(this.apply))
 
       case _ => throw new Exception("Unhandled exp in MVE: " + exp)
     }
@@ -106,7 +106,7 @@ class MutableVariableEliminator extends ProgramTransformer {
   private def apply(body: Body): Body = {
     body match {
       case Body(defs, exps) => {
-        Body(defs map this.apply, exps map this.apply)
+        Body(defs.map(this.apply), exps.map(this.apply))
       }
     }
   }

@@ -20,15 +20,15 @@ class TypeNormalizer extends ProgramTransformer {
 
     prog match {
       case Program(decs, defs, init) => {
-        val newDecs = decs map normalize
-        val newDefs = defs map normalize
+        val newDecs = decs.map(normalize)
+        val newDefs = defs.map(normalize)
         val newInit = normalize(init)
         Program(newDecs ++ addedDecs, newDefs, newInit)
       }
     }
   }
 
-  private def addType(name: SName, ty: Type) {
+  private def addType(name: SName, ty: Type) = {
     typeTable(ty) = name
   }
 
@@ -52,7 +52,7 @@ class TypeNormalizer extends ProgramTransformer {
   private def normalize(d: Dec): Dec = {
     d match {
       case TypeDec(name, ty) => {
-        if (typeTable contains ty) {
+        if typeTable contains ty then {
           typeTable(NamedType(name)) = typeTable(ty)
           EmptyDec()
         } else {
@@ -97,7 +97,7 @@ class TypeNormalizer extends ProgramTransformer {
         Lambda(normalize(formals), normalize(body))
       }
       case Closure(lam, ty, values) => {
-        Closure(normalize(lam), nameFor(ty), values map normalize)
+        Closure(normalize(lam), nameFor(ty), values.map(normalize))
       }
 
       case Let(bindings, body) => {
@@ -117,7 +117,7 @@ class TypeNormalizer extends ProgramTransformer {
 
 
       case MakeStruct(ty, values) => {
-        MakeStruct(nameFor(ty), values map normalize)
+        MakeStruct(nameFor(ty), values.map(normalize))
       }
       case StructGet(base, field, ty) => {
         StructGet(normalize(base), field, nameFor(ty))
@@ -139,13 +139,13 @@ class TypeNormalizer extends ProgramTransformer {
   }
 
   private def normalize(arguments: Arguments): Arguments = {
-    arguments map normalize
+    arguments.map(normalize)
   }
 
   private def normalize(body: Body): Body = {
     body match {
       case Body(defs, exps) => {
-        Body(defs map normalize, exps map normalize)
+        Body(defs.map(normalize), exps.map(normalize))
       }
     }
   }

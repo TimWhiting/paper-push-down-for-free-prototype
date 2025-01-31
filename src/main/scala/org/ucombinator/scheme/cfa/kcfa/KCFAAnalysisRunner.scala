@@ -12,7 +12,7 @@ import org.ucombinator.cfa.CFAStatistics
 class KCFAAnalysisRunner(opts: CFAOptions) extends SchemeCFARunner(opts) with PointerCESKMachinery with KCFAGarbageCollector
 with FancyOutput {
 
-  def runKCFA(opts: CFAOptions, anast: Exp) {
+  def runKCFA(opts: CFAOptions, anast: Exp) = {
     val sizeExp = ANormalizer.size(anast)
 
 
@@ -24,32 +24,32 @@ with FancyOutput {
     val secondTime = (new java.util.Date()).getTime
     val delta = (secondTime - firstTime)
 
-    if (isVerbose) {
+    if isVerbose then {
       println()
       println("The analysis has taken " + (
-        if (delta / 1000 < 1) "less than one second."
-        else if (delta / 1000 == 1) "1 second."
+        if delta / 1000 < 1 then "less than one second."
+        else if delta / 1000 == 1 then "1 second."
         else delta / 1000 + " seconds."))
     }
 
-    if (opts.verbose) {
+    if opts.verbose then {
       println()
       println("Finished. Computed states: " + resultConfs.size)
     }
 
-    if (!opts.simplifyGraph &&
+    if !opts.simplifyGraph &&
       resultConfs.exists {
         case (PFinal(_), _) => true
         case _ => false
-      }) {
-      if (opts.verbose) {
+      } then {
+      if opts.verbose then {
         println("Has final state.\n")
       }
-    } else if (!opts.simplifyGraph) {
+    } else if !opts.simplifyGraph then {
       println("Warning: no final state!\n")
     }
 
-    if (isVerbose) {
+    if isVerbose then {
       println()
       println("Computing statistics")
       println()
@@ -64,8 +64,8 @@ with FancyOutput {
 
 
     val intNodes: Set[Int] = map.values.toSet
-    val intEdges: Set[(Int, Int)] = resultEdges.flatMap[(Int, Int), Set[(Int, Int)]]{
-      case (c, c1) => if (map.isDefinedAt(c._1) && map.isDefinedAt(c1._1)){
+    val intEdges: Set[(Int, Int)] = resultEdges.flatMap {
+      case (c, c1) => if map.isDefinedAt(c._1) && map.isDefinedAt(c1._1) then {
         Set((map.apply(c._1), map.apply(c1._1)))
       } else Set.empty
     }
@@ -77,12 +77,12 @@ with FancyOutput {
     dumpStatistics(opts, CFAStatistics(delta, sizeExp, allVars.size,
       singletons.size, intNodes.size, stateCount, intEdges.size, interrupted))
 
-    if (interrupt) {
+    if interrupt then {
       println ("Interrupted after " + resultConfs.size + " states visited")
     }
 
 
-    if (opts.dumpGraph) {
+    if opts.dumpGraph then {
       println()
       println("Writing State Transition Graph")
       println()
@@ -109,7 +109,7 @@ with FancyOutput {
     buffer.append("digraph BST {\nsize=\"6,4\" ; ratio = fill;\n ")
 
     var list: List[String] = List()
-    for (edge <- edges: Set[(Conf, Conf)]) {
+    for edge <- edges: Set[(Conf, Conf)] do {
       val buf = new StringBuffer()
       val (s, _) = edge._1
       val (s1, _) = edge._2
@@ -132,14 +132,14 @@ with FancyOutput {
     import java.io._
 
     val graphs = new File(graphsDirName)
-    if (!graphs.exists) {
+    if !graphs.exists then {
       graphs.mkdirs()
       graphs.createNewFile()
     }
 
     val subfolderPath = graphsDirName + File.separator + StringUtils.trimFileName(opts.fileName)
     val subfolder = new File(subfolderPath)
-    if (!subfolder.exists) {
+    if !subfolder.exists then {
       subfolder.mkdirs()
       subfolder.createNewFile()
     }
@@ -147,7 +147,7 @@ with FancyOutput {
 
     val path = subfolderPath + File.separator + getGraphDumpFileName(opts)
     val file = new File(path)
-    if (!file.exists()) {
+    if !file.exists() then {
       file.createNewFile()
     }
     val writer = new FileWriter(file)

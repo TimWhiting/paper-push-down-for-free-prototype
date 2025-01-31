@@ -14,7 +14,7 @@ class Alphatizer extends ProgramTransformer {
   private val bound = scala.collection.mutable.HashSet[SName]()
 
   private def renameIfSeen(name: SName, env: RenameEnv): RenameEnv = {
-    if (bound contains name) {
+    if bound contains name then {
       // Bound elsewhere.
       val newName = SName.gensym(name)
       bound += newName

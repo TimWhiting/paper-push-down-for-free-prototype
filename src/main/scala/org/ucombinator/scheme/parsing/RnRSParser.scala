@@ -37,7 +37,7 @@ class RnRSParser {
       case n: SName => Ref(n)
 
       case SQuote :+: sexp :+: SNil => {
-        if (expandQuotes)
+        if expandQuotes then
           QuoteLit(sexp).expansion
         else
           QuoteLit(sexp)
@@ -100,7 +100,7 @@ class RnRSParser {
   def parseQuasiquote(depth: Int, qqexp: SExp): Exp = {
     qqexp match {
       case SList(SUnquote, sexp) =>
-        if (depth == 1) {
+        if depth == 1 then {
           parseExp(sexp)
         } else {
           ListExp(QuoteLit(SUnquote), parseQuasiquote(depth - 1, sexp))
@@ -110,7 +110,7 @@ class RnRSParser {
         ListExp(QuoteLit(SQuasiquote), parseQuasiquote(depth + 1, sexp))
 
       case hd@SList(SUnquoteSplicing, sexp) :+: tl => {
-        if (depth == 1) {
+        if depth == 1 then {
           new App(Ref(SAppend), parseExp(sexp), parseQuasiquote(depth, tl))
         } else {
           ConsExp(ListExp(QuoteLit(SUnquoteSplicing), parseQuasiquote(depth - 1, sexp)), parseQuasiquote(depth, tl))
@@ -143,16 +143,16 @@ class RnRSParser {
   }
 
   def parseFormals(sxl: SExp): Formals = {
-    if (sxl.isList) {
+    if sxl.isList then {
       val names = sxl.toList
       Formals(names map ((n: SExp) => PosFormal(n.asInstanceOf[SName])), None)
-    } else if (sxl.isPair) {
+    } else if sxl.isPair then {
       val (names, rest) = sxl.toDottedList
-      if (names isEmpty)
+      if names.isEmpty then
         Formals(List(), Some(rest.asInstanceOf[SName]))
       else
         Formals(names map ((n: SExp) => PosFormal(n.asInstanceOf[SName])), Some(rest.asInstanceOf[SName]))
-    } else if (sxl.isName) {
+    } else if sxl.isName then {
       Formals(List(), Some(sxl.asInstanceOf[SName]))
     } else {
       throw new Exception("Unhandled case for formals")
@@ -224,7 +224,7 @@ class RnRSParser {
         parseProgram(decs, defs, parseExp(e) :: exps)(tl)
 
       case Nil =>
-        Program(decs reverse, defs reverse, Sequence(exps reverse))
+        Program(decs.reverse, defs.reverse, Sequence(exps.reverse))
     }
   }
 

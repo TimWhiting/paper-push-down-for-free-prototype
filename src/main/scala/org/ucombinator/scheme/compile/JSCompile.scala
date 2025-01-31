@@ -13,7 +13,7 @@ class CPSEmitJS {
 
   private def mangle(string: String): String = {
     var s = "";
-    for (c <- string) {
+    for c <- string do {
       // println("mangling: " + c)  // DEBUG
       // println("isLoD:    " + Character.isLetterOrDigit(c)) // DEBUG
       s += (c match {
@@ -36,7 +36,7 @@ class CPSEmitJS {
   private def mangle(kw: SKeyword): String = "__kw_" + mangle(kw.string)
 
 
-  def emitln(s: String) {
+  def emitln(s: String) = {
     println(s);
   }
 
@@ -52,7 +52,7 @@ class CPSEmitJS {
     case _ => throw new Exception()
   }
 
-  def apply(prog: Program) {
+  def apply(prog: Program) = {
 
     this.prog = prog
 
@@ -72,17 +72,17 @@ class CPSEmitJS {
 
 object JSCompile {
 
-  private def write(file: java.io.File, contents: String) {
+  private def write(file: java.io.File, contents: String) : Unit = {
     val fw = new java.io.FileWriter(file);
     fw.write(contents);
     fw.close()
   }
 
-  private def write(fileName: String, contents: String) {
+  private def write(fileName: String, contents: String) : Unit = {
     write(new java.io.File(fileName), contents)
   }
 
-  def main(args: Array[String]) {
+  def main(args: Array[String]) = {
 
     /*
 
@@ -101,7 +101,7 @@ object JSCompile {
 
     var sexps: List[SExp] = Nil
 
-    if (filename == "-") {
+    if filename == "-" then {
       sexps = SExp.parseAll(scala.io.Source.fromInputStream(System.in).getLines mkString "")
     } else {
       sexps = SExp.parseAllIn(filename)

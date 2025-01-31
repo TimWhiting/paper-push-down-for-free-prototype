@@ -82,9 +82,9 @@ trait StateSpace extends PrimOperators {
   case object NumTop extends AbstractNumLit
 
   def mkNumLit(n: Long): AbstractNumLit = {
-    if (n > 0) {
+    if n > 0 then {
       NumTop
-    } else if (n < 0) {
+    } else if n < 0 then {
       NumTop
     } else {
       NumLit(n)
@@ -121,7 +121,7 @@ trait StateSpace extends PrimOperators {
    * Utility functions
    ******************************************************/
 
-  def kindOf(a: StackAction[_]): StackActionKind.Value = a match {
+  def kindOf(a: StackAction[?]): StackActionKind.Value = a match {
     case Eps => StackActionKind.Eps
     case Pop(_) => StackActionKind.Pop
     case Push(_) => StackActionKind.Push

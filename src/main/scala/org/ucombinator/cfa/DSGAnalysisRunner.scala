@@ -10,7 +10,7 @@ import org.ucombinator.util.{StringUtils, CFAOptions, FancyOutput}
  */
 
 trait DSGAnalysisRunner {
-  self: FancyOutput with DSGMachinery =>
+  self: FancyOutput & DSGMachinery =>
 
   import org.ucombinator.util.StringUtils._
 
@@ -19,14 +19,14 @@ trait DSGAnalysisRunner {
     import java.io._
 
     val graphs = new File(graphsDirName)
-    if (!graphs.exists) {
+    if !graphs.exists then {
       graphs.mkdirs()
       graphs.createNewFile()
     }
 
     val subfolderPath = graphsDirName + File.separator + StringUtils.trimFileName(opts.fileName)
     val subfolder = new File(subfolderPath)
-    if (!subfolder.exists) {
+    if !subfolder.exists then {
       subfolder.mkdirs()
       subfolder.createNewFile()
     }
@@ -34,7 +34,7 @@ trait DSGAnalysisRunner {
 
     val path = subfolderPath + File.separator + getGraphDumpFileName(opts)
     val file = new File(path)
-    if (!file.exists()) {
+    if !file.exists() then {
       file.createNewFile()
     }
     val writer = new FileWriter(file)
@@ -61,13 +61,13 @@ trait DSGAnalysisRunner {
     buffer.append("digraph BST {\nsize=\"6,4\" \n ")
 
     var list: List[String] = List()
-    for (Edge(s, g, s1) <- edges if s != s1) {
+    for Edge(s, g, s1) <- edges if s != s1 do {
       val buf = new StringBuffer()
       buf.append("\"" + prettyPrintState(s, map) + "\"")
       buf.append(" -> ")
       buf.append("\"" + prettyPrintState(s1, map) + "\"")
 
-      if (!simplify) {
+      if !simplify then {
         buf.append(" [label=\"")
         buf.append(truncateIfLong(g.toString, 100))
         buf.append("\"]")

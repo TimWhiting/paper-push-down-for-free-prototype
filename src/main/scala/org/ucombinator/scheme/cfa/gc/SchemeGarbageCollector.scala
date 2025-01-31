@@ -27,10 +27,10 @@ trait SchemeGarbageCollector extends StateSpace with GCInterface {
         val result: Set[Addr] = collectAdjacent(rootAddresses, s)
         result
 
-        if (printGCDebug) {
-          val original = (for ((a, _) <- s.bindings) yield a).toSet
+        if printGCDebug then {
+          val original = (for (a, _) <- s.bindings yield a).toSet
           val delta = original -- result
-          if (!delta.isEmpty) {
+          if !delta.isEmpty then {
             println("Original store size: " + original.size + "")
             println("Result size: " + result.size + "")
             println("Store delta (size " + delta.size + "):")
@@ -88,7 +88,7 @@ trait SchemeGarbageCollector extends StateSpace with GCInterface {
       rho => rho.values
     }
 
-    if (newAddresses subsetOf previousAddrs) {
+    if newAddresses subsetOf previousAddrs then {
       previousAddrs
     } else {
       collectAdjacent(newAddresses ++ previousAddrs, store)

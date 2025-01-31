@@ -20,7 +20,7 @@ class MCFA_CPS(exp: Exp, bEnv0: BEnv, t0: Time, store0: Store, val botD: D) exte
     case Unspecified() => botD
     case Ref(name) => {
       val addr = bEnv(name)
-      (store get addr) match {
+      store.get(addr) match {
         case Some(d) => d
         case None => {
           throw new Exception("could not find address: " + addr)
@@ -45,7 +45,7 @@ class MCFA_CPS(exp: Exp, bEnv0: BEnv, t0: Time, store0: Store, val botD: D) exte
   def allocateBEnv(exp: Exp, current: BEnv, lam: Lambda, captured: BEnv, nextTime: Time): BEnv = {
     flatPolicy match {
       case "m" =>
-        if (lam.isInstanceOf[ULambda])
+        if lam.isInstanceOf[ULambda] then
           current.asInstanceOf[FlatBEnv].succ(m, exp.label)
         else
           captured
@@ -98,9 +98,9 @@ class MCFA_CPS(exp: Exp, bEnv0: BEnv, t0: Time, store0: Store, val botD: D) exte
       case Clo(lam@Lambda(Formals(List(), Some(name)), ExpBody(call)), bEnv2) if !(call.free contains name) => {
         val newBEnv = allocBEnv(lam, bEnv2) // allocateBEnv(exp,bEnv,lam,bEnv2,newTime)
         var newStore = store
-        if (newBEnv != bEnv2)
-          for (x <- lam.free) {
-            newStore +=(newBEnv(x), store(bEnv2(x)))
+        if newBEnv != bEnv2 then
+          for x <- lam.free do {
+            newStore = newStore + (newBEnv(x), store(bEnv2(x)))
           }
         List(State(CFlat(call, newBEnv, newTime), StoreSharp(newStore)))
       }
@@ -264,14 +264,14 @@ class MCFA_CPS(exp: Exp, bEnv0: BEnv, t0: Time, store0: Store, val botD: D) exte
         val params = evalArgs(args, bEnv, store)
         val newTime = tick(exp, t)
         def allocBEnv(lam: Lambda, bEnv2: BEnv) = allocateBEnv(exp, bEnv, lam, bEnv2, newTime)
-        for (procValue <- procs.toList if procValue.isProcedure;
-             succ <- applyProcedure(allocBEnv)(params, store, newTime)(procValue)) yield {
+        for procValue <- procs.toList if procValue.isProcedure;
+             succ <- applyProcedure(allocBEnv)(params, store, newTime)(procValue) yield {
           succ
         }
       }
 
       case State(CFlat(exp@If(condition, ifTrue, ifFalse), bEnv, t), StoreSharp(store)) => {
-        for (call <- List(ifTrue, ifFalse)) yield {
+        for call <- List(ifTrue, ifFalse) yield {
           val newTime = tick(exp, t)
           State(CFlat(call, bEnv, newTime), StoreSharp(store))
         }

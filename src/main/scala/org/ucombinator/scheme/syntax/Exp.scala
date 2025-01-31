@@ -1,6 +1,7 @@
 package org.ucombinator.scheme.syntax
 
 import scala.collection.immutable.{Set => ImmSet, Map => ImmMap}
+import scala.util.boundary, boundary.break
 
 
 /* Abstract syntax. */
@@ -188,7 +189,7 @@ case class NamedType(name: SName) extends Type {
   override def hashCode = name.hashCode()
 
   override def equals(that: Any) = that match {
-    case NamedType(thatName: SName) => this.name equals thatName
+    case NamedType(thatName: SName) => this.name `equals` thatName
     case _ => false
   }
 
@@ -199,7 +200,7 @@ case class StrictStruct(val fields: List[SName]) extends Type {
   override def hashCode = fields.foldRight(1)((n: SName, h: Int) => 2 * h + n.hashCode())
 
   override def equals(that: Any) = that match {
-    case StrictStruct(thoseFields) => this.fields.corresponds(thoseFields)(_ equals _)
+    case StrictStruct(thoseFields) => this.fields.corresponds(thoseFields)(_.equals(_))
     case _ => false
   }
 
@@ -210,7 +211,7 @@ case class ClosureStruct(val fields: List[SName]) extends Type {
   override def hashCode = fields.foldRight(1)((n: SName, h: Int) => 2 * h + n.hashCode())
 
   override def equals(that: Any) = that match {
-    case ClosureStruct(thoseFields) => this.fields.corresponds(thoseFields)(_ equals _)
+    case ClosureStruct(thoseFields) => this.fields.corresponds(thoseFields)(_.equals(_))
     case _ => false
   }
 
@@ -254,7 +255,7 @@ case class Program(val decs: List[Dec], val defs: List[Def], val init: Exp) {
 
   private lazy val typeTable: scala.collection.mutable.Map[SName, Type] = {
     val tbl = scala.collection.mutable.HashMap[SName, Type]()
-    for (d <- decs) {
+    for d <- decs do {
       d match {
         case TypeDec(name, ty) => {
           tbl(name) = ty
@@ -278,10 +279,11 @@ case class Program(val decs: List[Dec], val defs: List[Def], val init: Exp) {
   }
 
   def valueOfGlobal(name: SName): Exp = {
-    for (d <- defs) {
-      if (d.name == name)
-        return d.value
-    }
+    boundary:
+      for d <- defs do {
+        if d.name == name then
+          break(d.value)
+      }
     return Unspecified()
   }
 
@@ -296,7 +298,7 @@ case class Program(val decs: List[Dec], val defs: List[Def], val init: Exp) {
   def toExp: Exp = {
     /* TODO: Eliminate this procedure entirely. */
 
-    if (!decs.isEmpty)
+    if !decs.isEmpty then
       throw new Exception("Can't convert program to expression if declarations exist")
     defs match {
       case List() =>
@@ -365,7 +367,7 @@ case class PosFormal(val name: SName) extends Formal {
 }
 
 case class KeywordFormal(val keyword: SKeyword, val name: SName) extends Formal {
-  override def toString = keyword + " " + name.toString
+  override def toString = keyword.toString + " " + name.toString
 }
 
 case object NumTopExp extends Lit(null){
@@ -404,7 +406,7 @@ abstract class Argument {
 case class PosArgument(val exp: Exp) extends Argument {
   override def toString = exp.toString
 
-  def substitute(map: ImmMap[SName, Exp]): Argument = PosArgument(exp substitute map)
+  def substitute(map: ImmMap[SName, Exp]): Argument = PosArgument(exp.substitute(map))
 
   def map(f: Exp => Exp): PosArgument = PosArgument(f(exp))
 
@@ -413,9 +415,9 @@ case class PosArgument(val exp: Exp) extends Argument {
 }
 
 case class KeywordArgument(val keyword: SKeyword, val exp: Exp) extends Argument {
-  override def toString = keyword + " " + exp.toString
+  override def toString = keyword.toString + " " + exp.toString
 
-  def substitute(map: ImmMap[SName, Exp]): Argument = KeywordArgument(keyword, exp substitute map)
+  def substitute(map: ImmMap[SName, Exp]): Argument = KeywordArgument(keyword, exp.substitute(map))
 
   def map(f: Exp => Exp): KeywordArgument = KeywordArgument(keyword, f(exp))
 
@@ -442,7 +444,7 @@ case class Arguments(val args: List[Argument], val rest: Option[Exp]) {
       case PosArgument(e) => p(e)
       case KeywordArgument(kw, e) => p(e)
     }
-    if (!allArgs)
+    if !allArgs then
       return false
 
     rest match {
@@ -456,7 +458,7 @@ case class Arguments(val args: List[Argument], val rest: Option[Exp]) {
       case PosArgument(e) => p(e)
       case KeywordArgument(kw, e) => p(e)
     }
-    if (anyArg)
+    if anyArg then
       return true
 
     rest match {
@@ -494,7 +496,7 @@ case class Arguments(val args: List[Argument], val rest: Option[Exp]) {
   All the keywords used anywhere in these arguments.
    */
   lazy val keywordsUsed: ImmSet[SKeyword] =
-    if (rest.isEmpty) {
+    if rest.isEmpty then {
       ImmSet() ++ (args flatMap (_.keywords))
     } else {
       rest.get.keywords ++ (args flatMap (_.keywords))
@@ -564,7 +566,7 @@ case class ImplicitDef(val value: Exp) extends Def {
   override def toString = value.toString
 
   def substitute(map: ImmMap[SName, Exp]): Def = {
-    ImplicitDef(value substitute map)
+    ImplicitDef(value.substitute(map))
   }
 
   lazy val name = SName.gensym("_")
@@ -578,7 +580,7 @@ case class VarDef(val name: SName, val value: Exp) extends Def {
   override def toString = "(define " + name + " " + value.toString + ")"
 
   def substitute(map: ImmMap[SName, Exp]): Def = {
-    VarDef(name, value substitute (map - name))
+    VarDef(name, value.substitute(map - name))
   }
 
   lazy val keywords: ImmSet[SKeyword] = value.keywords
@@ -592,7 +594,7 @@ case class FunctionDef(val name: SName, val formals: Formals, val body: Body) ex
   def value = Lambda(formals, body)
 
   def substitute(map: ImmMap[SName, Exp]): Def = {
-    FunctionDef(name, formals, body substitute (map - name -- formals.bound))
+    FunctionDef(name, formals, body.substitute(map - name -- formals.bound))
   }
 
   lazy val keywords: ImmSet[SKeyword] = formals.keywordSet ++ body.keywords
@@ -834,14 +836,14 @@ case class App(val fun: Exp, val args: Arguments) extends Exp {
   def this(fun: Exp, args: Exp*) =
     this(fun, new Arguments(args.toList map (PosArgument(_))))
 
-  def substitute(map: ImmMap[SName, Exp]) = App(fun substitute map, args substitute map)
+  def substitute(map: ImmMap[SName, Exp]) = App(fun.substitute(map), args.substitute(map))
 
   def isDuplicable = false
 
   lazy val mustReturnOrFail = {
     fun match {
       case p: Prim =>
-        p.invocationMustReturnOrFail && (args forall (_.mustReturnOrFail))
+        p.invocationMustReturnOrFail && (args.forall(_.mustReturnOrFail))
       case _ => false
     }
   }
@@ -854,21 +856,21 @@ case class App(val fun: Exp, val args: Arguments) extends Exp {
   lazy val mayMutate: Boolean = {
     fun match {
       case p: Prim =>
-        p.invocationMayMutate || (args exists (_.mayMutate))
+        p.invocationMayMutate || (args.exists(_.mayMutate))
       case _ => true
     }
   }
   lazy val mayAllocate: Boolean = {
     fun match {
       case p: Prim =>
-        p.invocationMayAllocate || (args exists (_.mayAllocate))
+        p.invocationMayAllocate || (args.exists(_.mayAllocate))
       case _ => true
     }
   }
   lazy val mayPerformIO: Boolean = {
     fun match {
       case p: Prim =>
-        p.invocationMayPerformIO || (args exists (_.mayPerformIO))
+        p.invocationMayPerformIO || (args.exists(_.mayPerformIO))
       case _ => true
     }
   }
@@ -885,7 +887,7 @@ case class Lambda(val formals: Formals, val body: Body) extends Exp {
   override def toString = "(lambda " + formals + " " + body + ")"
 
   def substitute(map: ImmMap[SName, Exp]): Exp = {
-    Lambda(formals, body substitute (map -- formals.bound))
+    Lambda(formals, body.substitute(map -- formals.bound))
   }
 
   def isDuplicable = false
@@ -921,9 +923,9 @@ case class If(val condition: Exp, ifTrue: Exp, ifFalse: Exp) extends Exp {
   override def toString = "(if " + condition + " " + ifTrue + " " + ifFalse + ")"
 
   def substitute(map: ImmMap[SName, Exp]): Exp = {
-    If(condition substitute map,
-      ifTrue substitute map,
-      ifFalse substitute map)
+    If(condition.substitute(map),
+      ifTrue.substitute(map),
+      ifFalse.substitute(map))
   }
 
   def isDuplicable = false
@@ -945,15 +947,15 @@ case class SetVar(val name: SName, val value: Exp) extends Exp {
   override def toString = "(set! " + name + " " + value + ")"
 
   def substitute(map: ImmMap[SName, Exp]): Exp = {
-    if (map contains name)
+    if map contains name then
       map(name) match {
         // BUGGY: Should have a second substitute method instead.
-        //case Ref(newName) => SetVar(newName, value substitute map)
+        //case Ref(newName) => SetVar(newName, value.substitute(map))
         case _ => throw new Exception("Cannot substitute a mutable name for a non-variable expression: " +
           name + " v. " + map(name))
       }
     else
-      SetVar(name, value substitute map)
+      SetVar(name, value.substitute(map))
   }
 
   def isDuplicable = false
@@ -974,16 +976,16 @@ case class Values(val args: Arguments) extends Exp {
   override def toString = "(values " + args + ")"
 
   def substitute(map: ImmMap[SName, Exp]): Exp = {
-    Values(args substitute map)
+    Values(args.substitute(map))
   }
 
   def isDuplicable = false
 
-  lazy val mustReturnOrFail: Boolean = args forall (_.mustReturnOrFail)
+  lazy val mustReturnOrFail: Boolean = args.forall(_.mustReturnOrFail)
   lazy val mustReturnUnspecified: Boolean = false
-  lazy val mayMutate: Boolean = args exists (_.mayMutate)
-  lazy val mayAllocate: Boolean = args exists (_.mayAllocate)
-  lazy val mayPerformIO: Boolean = args exists (_.mayPerformIO)
+  lazy val mayMutate: Boolean = args.exists(_.mayMutate)
+  lazy val mayAllocate: Boolean = args.exists(_.mayAllocate)
+  lazy val mayPerformIO: Boolean = args.exists(_.mayPerformIO)
 
   lazy val free = args.free
   lazy val keywords: ImmSet[SKeyword] = args.keywordsUsed
@@ -1017,7 +1019,7 @@ case class Begin(body: Body) extends Exp {
   override def toString = "(begin " + body + ")"
 
   def substitute(map: ImmMap[SName, Exp]): Exp = {
-    Begin(body substitute map)
+    Begin(body.substitute(map))
   }
 
   def isDuplicable = false
@@ -1106,7 +1108,7 @@ abstract class CondClause {
 
 case class SelfCondClause(val test: Exp) extends CondClause {
   def substitute(map: ImmMap[SName, Exp]): CondClause = {
-    SelfCondClause(test substitute map)
+    SelfCondClause(test.substitute(map))
   }
 
   lazy val free = test.free
@@ -1117,7 +1119,7 @@ case class SelfCondClause(val test: Exp) extends CondClause {
 
 case class TestCondClause(val test: Exp, val exps: List[Exp]) extends CondClause {
   def substitute(map: ImmMap[SName, Exp]): CondClause = {
-    TestCondClause(test substitute map, exps map (_.substitute(map)))
+    TestCondClause(test.substitute(map), exps map (_.substitute(map)))
   }
 
   lazy val free = test.free ++ (exps flatMap (_.free))
@@ -1129,7 +1131,7 @@ case class TestCondClause(val test: Exp, val exps: List[Exp]) extends CondClause
 
 case class ProcCondClause(val test: Exp, val proc: Exp) extends CondClause {
   def substitute(map: ImmMap[SName, Exp]): CondClause = {
-    ProcCondClause(test substitute map, proc substitute map)
+    ProcCondClause(test.substitute(map), proc.substitute(map))
   }
 
   lazy val free = test.free ++ proc.free
@@ -1217,7 +1219,7 @@ case class Bindings(val bindings: List[Binding]) {
 
 object Bindings {
   def apply(names: List[SName], values: List[Exp]): Bindings = {
-    val binds = for ((n, v) <- names zip values) yield {
+    val binds = for (n, v) <- names zip values yield {
       Binding(n, v)
     }
     Bindings(binds)
@@ -1252,18 +1254,18 @@ case class Let(_bindings: Bindings, _body: Body) extends LetForm(_bindings, _bod
   def this(name: SName, value: Exp, body: Body) =
     this(Bindings(List(Binding(name, value))), body)
 
-  override def toString = toString("let")
+  override def toString = super.toString("let")
 
   def substitute(map: ImmMap[SName, Exp]): Exp = {
     val bound = bindings.names
     val newBindings =
       bindings map {
-        case Binding(name, value) => Binding(name, value substitute map)
+        case Binding(name, value) => Binding(name, value.substitute(map))
       }
-    Let(newBindings, body substitute (map -- bound))
+    Let(newBindings, body.substitute(map -- bound))
   }
 
-  lazy val free = ImmSet() ++ (bindings.values flatMap (_.free)) ++ (body.free -- (bindings.names))
+  lazy val free = ImmSet() ++ (bindings.values.flatMap(_.free)) ++ (body.free -- (bindings.names))
 
   def toRedEx = {
     App(Lambda(Formals(bindings.names map {
@@ -1275,29 +1277,29 @@ case class Let(_bindings: Bindings, _body: Body) extends LetForm(_bindings, _bod
   }
 
   def toLetStar = {
-    val free = (bindings.values) flatMap (_.free)
-    val rebinding = bindings.names exists (name => free contains name)
-    if (rebinding)
+    val free = (bindings.values).flatMap(_.free)
+    val rebinding = bindings.names.exists(name => free contains name)
+    if rebinding then
       throw new Exception("Program not alphatised!")
     LetStar(bindings, body)
   }
 }
 
 case class LetRec(_bindings: Bindings, _body: Body) extends LetForm(_bindings, _body) {
-  override def toString = toString("letrec")
+  override def toString = super.toString("letrec")
 
   def substitute(map: ImmMap[SName, Exp]): Exp = {
     val bound = ImmSet() ++ bindings.names
     val newMap = map -- bound
     val newBindings =
       bindings map {
-        case Binding(name, value) => Binding(name, value substitute newMap)
+        case Binding(name, value) => Binding(name, value `substitute` newMap)
       }
-    Let(newBindings, body substitute newMap)
+    Let(newBindings, body `substitute` newMap)
   }
 
   lazy val toLetsAndSets: Exp = {
-    val newBindings = bindings map (b => Binding(b.name, Unspecified()))
+    val newBindings = bindings `map` (b => Binding(b.name, Unspecified()))
     val sets = bindings.bindings map (b => SetVar(b.name, b.value))
     Let(newBindings, Body(List(), sets ++ List(Begin(body))))
   }
@@ -1307,13 +1309,13 @@ case class LetRec(_bindings: Bindings, _body: Body) extends LetForm(_bindings, _
 }
 
 case class LetStar(_bindings: Bindings, _body: Body) extends LetForm(_bindings, _body) {
-  override def toString = toString("let*")
+  override def toString = super.toString("let*")
 
   def substitute(map: ImmMap[SName, Exp]): Exp =
     throw new Exception("let* not yet substitutable")
 
   private def freeIn(bindings: List[Binding], body: Body): ImmSet[SName] = {
-    if (bindings isEmpty)
+    if bindings.isEmpty then
       body.free
     else
       ImmSet() ++ bindings.head.value.free ++ (freeIn(bindings.tail, body) - bindings.head.name)
@@ -1364,7 +1366,7 @@ case class StructGet(val base: Exp, val field: SName, val t: Type) extends Exp {
   lazy val mayPerformIO: Boolean = base.mayPerformIO
 
   def substitute(map: ImmMap[SName, Exp]): Exp = {
-    StructGet(base substitute map, field, t)
+    StructGet(base.substitute(map), field, t)
   }
 
   lazy val free = base.free
@@ -1385,7 +1387,7 @@ case class StructSet(val base: Exp, val field: SName, val t: Type, val value: Ex
   lazy val mayPerformIO: Boolean = base.mayPerformIO || value.mayPerformIO
 
   def substitute(map: ImmMap[SName, Exp]): Exp = {
-    StructSet(base substitute map, field, t, value substitute map)
+    StructSet(base.substitute(map), field, t, value.substitute(map))
   }
 
   lazy val free = base.free ++ value.free
@@ -1400,7 +1402,7 @@ case class StructSet(val base: Exp, val field: SName, val t: Type, val value: Ex
  */
 case class Closure(val lam: Exp, val ty: Type, val fields: List[Exp]) extends Exp {
   def substitute(map: ImmMap[SName, Exp]): Exp = {
-    Closure(lam substitute map, ty, fields map (_ substitute map))
+    Closure(lam.substitute(map), ty, fields map (_.substitute(map)))
   }
 
   def isDuplicable = lam.isDuplicable && (fields forall (_.isDuplicable))
@@ -1424,15 +1426,15 @@ case class Call(val fun: Exp, val key: SKeyword, val args: Arguments) extends Ex
   def this(fun: Exp, key: SKeyword, args: Exp*) =
     this(fun, key, new Arguments(args.toList map (PosArgument(_))))
 
-  def substitute(map: ImmMap[SName, Exp]) = Call(fun substitute map, key, args substitute map)
+  def substitute(map: ImmMap[SName, Exp]) = Call(fun.substitute(map), key, args.substitute(map))
 
   def isDuplicable = false
 
   lazy val mustReturnOrFail: Boolean = false
   lazy val mustReturnUnspecified: Boolean = false
-  lazy val mayMutate: Boolean = fun.mayMutate || (args exists (_.mayMutate))
-  lazy val mayAllocate: Boolean = fun.mayAllocate || (args exists (_.mayAllocate))
-  lazy val mayPerformIO: Boolean = fun.mayPerformIO || (args exists (_.mayPerformIO))
+  lazy val mayMutate: Boolean = fun.mayMutate || (args `exists` (_.mayMutate))
+  lazy val mayAllocate: Boolean = fun.mayAllocate || (args `exists` (_.mayAllocate))
+  lazy val mayPerformIO: Boolean = fun.mayPerformIO || (args `exists` (_.mayPerformIO))
 
   lazy val free = fun.free ++ args.free
   lazy val keywords: ImmSet[SKeyword] = (fun.keywords ++ args.keywordsUsed) + key

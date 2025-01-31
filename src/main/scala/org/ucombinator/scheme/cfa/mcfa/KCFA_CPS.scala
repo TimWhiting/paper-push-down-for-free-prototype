@@ -13,7 +13,7 @@ class KCFA_CPS(prog: Program, bEnv0: BEnv, t0: Time, store0: Store, val botD: D)
         var newBEnv = bEnv0
         var newStore = store0
 
-        for (d <- defs) {
+        for d <- defs do {
           newStore = newStore +(GlobalAddr(d.name), atomEval(bEnv0, store0)(d.value))
         }
 
@@ -34,7 +34,7 @@ class KCFA_CPS(prog: Program, bEnv0: BEnv, t0: Time, store0: Store, val botD: D)
       store(GlobalAddr(name))
     case Ref(name) => {
       val addr = bEnv(name)
-      (store get addr) match {
+      store.get(addr) match {
         case Some(d) => d
         case None => {
           throw new Exception("could not find address: " + addr + " in " + store)
@@ -47,8 +47,8 @@ class KCFA_CPS(prog: Program, bEnv0: BEnv, t0: Time, store0: Store, val botD: D)
     case StructGet(base, field, ty) => {
       val locs = atomEval(bEnv, store)(base)
       var ans = botD
-      val values = for (l <- locs.toList if l.isObjectLocation) yield {
-        ans = ans join store(FieldAddr(l.asInstanceOf[ObjectLocation], field))
+      val values = for l <- locs.toList if l.isObjectLocation yield {
+        ans = ans.join(store(FieldAddr(l.asInstanceOf[ObjectLocation], field)))
       }
       ans
     }
@@ -91,39 +91,39 @@ class KCFA_CPS(prog: Program, bEnv0: BEnv, t0: Time, store0: Store, val botD: D)
   }
 
   private def car(cell: D, store: Store): D = {
-    val cars = for (loc <- cell.toList if loc.isObjectLocation) yield {
+    val cars = for loc <- cell.toList if loc.isObjectLocation yield {
       val aloc = loc.asInstanceOf[ObjectLocation]
       val carAddr = FieldAddr(aloc, CommonSSymbols.SCar)
-      (store get carAddr) match {
+      store.get(carAddr) match {
         case Some(d) => d
         case None => botD
       }
     }
-    cars.foldLeft(botD)((d1, d2) => d1 join d2)
+    cars.foldLeft(botD)((d1, d2) => d1.join(d2))
   }
 
   private def cdr(cell: D, store: Store): D = {
-    val cdrs = for (loc <- cell.toList if loc.isObjectLocation) yield {
+    val cdrs = for loc <- cell.toList if loc.isObjectLocation yield {
       val aloc = loc.asInstanceOf[ObjectLocation]
       val cdrAddr = FieldAddr(aloc, CommonSSymbols.SCdr)
-      (store get cdrAddr) match {
+      store.get(cdrAddr) match {
         case Some(d) => d
         case None => botD
       }
     }
-    cdrs.foldLeft(botD)((d1, d2) => d1 join d2)
+    cdrs.foldLeft(botD)((d1, d2) => d1.join(d2))
   }
 
   private def nth(base: D, n: Int, store: Store): D = {
     // OPTIMIZE: Cache this function.
-    if (n == 0)
+    if n == 0 then
       base
     else
       cdr(nth(base, n - 1, store), store)
   }
 
   private def paramnth(params: Parameters, n: Int, store: Store): D = {
-    if (n < params.positionals.length)
+    if n < params.positionals.length then
       params(n)
     else params.rest match {
       case Some(base) => car(nth(base, n - params.positionals.length, store), store)
@@ -148,7 +148,7 @@ class KCFA_CPS(prog: Program, bEnv0: BEnv, t0: Time, store0: Store, val botD: D)
 
 
   private def remainder(params: Parameters, i: Int, newTime: Time, store: Store): (D, Store) = {
-    if (i < params.positionals.length) {
+    if i < params.positionals.length then {
       val tail = params.rest match {
         case Some(rest) => rest
         case None => botD + NilValue()
@@ -167,7 +167,7 @@ class KCFA_CPS(prog: Program, bEnv0: BEnv, t0: Time, store0: Store, val botD: D)
         List(State(CFlat(call, bEnv2, newTime), StoreSharp(store)))
       }
 
-      case Clo(lam@Lambda(formals, ExpBody(call)), bEnv2) if params fits formals => {
+      case Clo(lam@Lambda(formals, ExpBody(call)), bEnv2) if params.fits(formals) => {
 
         dumpln(params.toString)
 
@@ -176,20 +176,20 @@ class KCFA_CPS(prog: Program, bEnv0: BEnv, t0: Time, store0: Store, val botD: D)
 
         var i = 0
         // Bind positional arguments:
-        for (PosFormal(name) <- formals.positionals) {
+        for PosFormal(name) <- formals.positionals do {
           // TODO: Un-hard-code the MapBind; factor into alloc
-          if (call.free contains name) {
+          if call.free contains name then {
             val d = paramnth(params, i, newStore)
             dumpln("binding " + name + " to " + d)
             dumpln("positionals(" + i + ") = " + params.positionals(i))
             newBEnv = (newBEnv(name) = MapBind(name, newTime))
-            newStore +=(newBEnv(name), d)
+            newStore = newStore + (newBEnv(name), d)
           }
           i += 1
         }
 
         // If formals.rest exists, bind it to with formal ++
-        if (formals.rest.isDefined) {
+        if formals.rest.isDefined then {
           // Stuff the rest into a list.
           // val remainder = params.positionals.drop(i)
           val (listD, newStore_) = remainder(params, i, newTime, newStore)
@@ -199,10 +199,10 @@ class KCFA_CPS(prog: Program, bEnv0: BEnv, t0: Time, store0: Store, val botD: D)
         }
 
         // Bind keyword arguments:
-        for (KeywordFormal(keyword, name) <- formals.keywords) {
-          if (call.free contains name) {
+        for KeywordFormal(keyword, name) <- formals.keywords do {
+          if call.free contains name then {
             newBEnv = (newBEnv(name) = MapBind(name, newTime))
-            newStore +=(newBEnv(name), params(keyword))
+            newStore = newStore + (newBEnv(name), params(keyword))
           }
         }
 
@@ -217,7 +217,7 @@ class KCFA_CPS(prog: Program, bEnv0: BEnv, t0: Time, store0: Store, val botD: D)
                           "=" | ">" | "<=" | ">=", _)) => {
         val conts = params(SKeyword.from("cc"))
         val primParams = (botD + BooleanValue(true) + BooleanValue(false)) :: (new Parameters())
-        for (cont <- conts.toList; succ <- applyProcedure(primParams, store, newTime)(cont)) yield {
+        for cont <- conts.toList; succ <- applyProcedure(primParams, store, newTime)(cont) yield {
           succ
         }
       }
@@ -227,7 +227,7 @@ class KCFA_CPS(prog: Program, bEnv0: BEnv, t0: Time, store0: Store, val botD: D)
         // TODO: Remove "cc" param
         val conts = params(SKeyword.from("cc"))
         val primParams = applyAtomicPrimitive(prim, params) :: (new Parameters())
-        for (cont <- conts.toList; succ <- applyProcedure(primParams, store, newTime)(cont)) yield {
+        for cont <- conts.toList; succ <- applyProcedure(primParams, store, newTime)(cont) yield {
           succ
         }
       }
@@ -259,7 +259,7 @@ class KCFA_CPS(prog: Program, bEnv0: BEnv, t0: Time, store0: Store, val botD: D)
                 val fieldAddrs = fieldNames map (FieldAddr(loc, _))
                 var newStore = store
                 val fieldValues = values map (atomEval(bEnv, store)(_))
-                for ((a, d) <- fieldAddrs zip fieldValues) {
+                for (a, d) <- fieldAddrs zip fieldValues do {
                   newStore = (newStore +(a, d))
                 }
                 val binding = MapBind(name, newTime)
@@ -289,14 +289,14 @@ class KCFA_CPS(prog: Program, bEnv0: BEnv, t0: Time, store0: Store, val botD: D)
         val procs = atomEval(bEnv, store)(f)
         val params = evalArgs(args, bEnv, store)
         val newTime = tick(exp, t)
-        for (procValue <- procs.toList if procValue.isProcedure;
-             succ <- applyProcedure(params, store, newTime)(procValue)) yield {
+        for procValue <- procs.toList if procValue.isProcedure;
+             succ <- applyProcedure(params, store, newTime)(procValue) yield {
           succ
         }
       }
 
       case State(CFlat(exp@If(condition, ifTrue, ifFalse), bEnv, t), StoreSharp(store)) => {
-        for (call <- List(ifTrue, ifFalse)) yield {
+        for call <- List(ifTrue, ifFalse) yield {
           val newTime = tick(exp, t)
           State(CFlat(call, bEnv, newTime), StoreSharp(store))
         }
@@ -305,7 +305,7 @@ class KCFA_CPS(prog: Program, bEnv0: BEnv, t0: Time, store0: Store, val botD: D)
       case State(CFlat(exp@Sequence(SetVar(name, value), call), bEnv, t), StoreSharp(store)) => {
         val d = atomEval(bEnv, store)(value)
 
-        val addr = if (prog.globals contains name) {
+        val addr = if prog.globals contains name then {
           GlobalAddr(name)
         } else {
           bEnv(name)

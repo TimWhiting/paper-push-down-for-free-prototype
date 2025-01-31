@@ -1,12 +1,12 @@
 package org.ucombinator.scheme.cfa.cesk.store
 
 trait Store[A, B] {
-  def apply(addr: A): Set[B] = (this get addr) match {
+  def apply(addr: A): Set[B] = this.get(addr) match {
     case Some(d) => d
     case None => throw new Exception("Could not find " + addr)
   }
 
-  def getOrElse(addr: A, default: Set[B]): Set[B] = (this get addr) match {
+  def getOrElse(addr: A, default: Set[B]): Set[B] = this.get(addr) match {
     case Some(d) => d
     case None => default
   }

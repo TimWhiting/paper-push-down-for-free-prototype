@@ -9,11 +9,11 @@ import org.ucombinator.util.CFAOptions
 
 object RunOldMCFA {
 
-  def main(args: Array[String]) {
+  def main(args: Array[String]) : Unit = {
 
     val opts = CFAOptions.parse(args)
 
-    if (opts.fileName == null) {
+    if opts.fileName == null then {
       System.err.println("Please specify a filename.")
       return
     }
@@ -23,7 +23,7 @@ object RunOldMCFA {
     val sexps = SExp.parseAllIn(filename)
     System.err.println("done")
 
-    System.err.print("Bulding AST...")
+    System.err.print("Building AST...")
     val ast = RnRSParser(sexps)
     System.err.println("done")
 

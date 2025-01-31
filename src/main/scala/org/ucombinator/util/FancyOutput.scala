@@ -38,8 +38,8 @@ trait FancyOutput {
       case AnalysisType.PDCFA => "-pdcfa"
     }
     val prefix = "graph-"
-    val arity = if (opts.dummy) "dummy" else opts.k.toString
-    val gc = if (opts.gc) "-gc" else ""
+    val arity = if opts.dummy then "dummy" else opts.k.toString
+    val gc = if opts.gc then "-gc" else ""
     prefix + arity + cfa + gc + ".gv"
   }
 
@@ -49,8 +49,8 @@ trait FancyOutput {
       case AnalysisType.PDCFA => "-pdcfa"
     }
     val prefix = "stat-"
-    val arity = if (opts.dummy) "dummy" else opts.k.toString
-    val gc = if (opts.gc) "-gc" else ""
+    val arity = if opts.dummy then "dummy" else opts.k.toString
+    val gc = if opts.gc then "-gc" else ""
     prefix + arity + cfa + gc + ".txt"
   }
 

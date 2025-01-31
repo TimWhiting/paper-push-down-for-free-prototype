@@ -14,7 +14,7 @@ trait Stores extends Ordered[Stores] {
     val thisClass = this.getClass()
     val thatClass = that.getClass()
     val cmp = thisClass.getName() compare thatClass.getName()
-    if (cmp != 0)
+    if cmp != 0 then
       cmp
     else
       localCompare(that)
@@ -59,11 +59,11 @@ case class StructLocation(time: Time, tag: SName, n: Int) extends ObjectLocation
   def localCompare(that: Value): Int = that match {
     case StructLocation(thatTime, thatTag, thatN) => {
       val cmp1 = time compare thatTime
-      if (cmp1 != 0)
+      if cmp1 != 0 then
         return cmp1
 
-      val cmp2 = this.tag compare thatTag
-      if (cmp2 != 0)
+      val cmp2 = this.tag.compare(thatTag)
+      if cmp2 != 0 then
         return cmp2
 
       this.n compare thatN
@@ -93,7 +93,7 @@ trait BEnv extends Ordered[BEnv] {
   def apply(name: SName): Stores;
 
   override def equals(that: Any) = that match {
-    case thatBEnv: BEnv => (this compare thatBEnv) == 0
+    case thatBEnv: BEnv => this.compare(thatBEnv) == 0
     case _ => false
   }
 
@@ -107,12 +107,12 @@ trait Time extends Ordered[Time] {
 }
 
 trait Store {
-  def apply(addr: Stores): D = (this get addr) match {
+  def apply(addr: Stores): D = this.get(addr) match {
     case Some(d) => d
     case None => throw new Exception("Could not find " + addr)
   }
 
-  def getOrElse(addr: Stores, default: D): D = (this get addr) match {
+  def getOrElse(addr: Stores, default: D): D = this.get(addr) match {
     case Some(d) => d
     case None => default
   }
@@ -148,14 +148,14 @@ trait Value extends Ordered[Value] {
     val thisClassName = this.getClass().getName()
     val thatClassName = that.getClass().getName()
     val cmp = thisClassName compare thatClassName
-    if (cmp != 0)
+    if cmp != 0 then
       cmp
     else
       this.localCompare(that)
   }
 
   override def equals(that: Any): Boolean = that match {
-    case that: Value => (this compare that) == 0
+    case that: Value => this.compare(that) == 0
     case _ => false
   }
 
@@ -164,7 +164,7 @@ trait Value extends Ordered[Value] {
 
 
 case class BooleanValue(val value: Boolean) extends Value {
-  override def toString = if (value) {
+  override def toString = if value then {
     "#t"
   } else {
     "#f"
@@ -194,7 +194,7 @@ case class NilValue() extends Value {
 
 case class PrimValue(val op: Prim) extends Value {
   def localCompare(that: Value): Int = that match {
-    case PrimValue(thatOp: Prim) => this.op compare thatOp
+    case PrimValue(thatOp: Prim) => this.op.compare(thatOp)
   }
 
   def isProcedure = true
@@ -218,7 +218,7 @@ case class StoreUpdate(val isStrong: Boolean, val addr: Stores, val d: D) {
   def apply(sharp: Sharp): Sharp = {
     sharp match {
       case StoreSharp(store) =>
-        if (isStrong)
+        if isStrong then
           new StoreSharp(store(addr) = d)
         else
           new StoreSharp(store +(addr, d))
@@ -237,19 +237,19 @@ class SentinelStore(val changeLog: List[StoreUpdate], val store: Store) extends 
 
   def this(store: Store) = this(List(), store)
 
-  def get(addr: Stores) = store get addr
+  def get(addr: Stores) = store.get(addr)
 
   def wt(that: Store) = that match {
-    case thatStore: SentinelStore => store wt thatStore.store
-    case _ => store wt that
+    case thatStore: SentinelStore => store.wt(thatStore.store)
+    case _ => store.wt(that)
   }
 
   def resetLog() =
     new SentinelStore(List(), store)
 
   def +(addr: Stores, d: D): SentinelStore = {
-    (store get addr) match {
-      case Some(d2) if (d wt d2) => this
+    (store.get(addr)) match {
+      case Some(d2) if d.wt(d2) => this
       case _ => {
         new SentinelStore(StoreUpdate(false, addr, d) :: changeLog, store +(addr, d))
       }
@@ -257,8 +257,8 @@ class SentinelStore(val changeLog: List[StoreUpdate], val store: Store) extends 
   }
 
   def update(addr: Stores, d: D): SentinelStore = {
-    (store get addr) match {
-      case Some(d2) if (d wt d2) => this
+    (store.get(addr)) match {
+      case Some(d2) if d.wt(d2) => this
       case _ => {
         new SentinelStore(StoreUpdate(true, addr, d) :: changeLog, store(addr) = d)
       }
@@ -285,7 +285,7 @@ class MapStore(val map: SortedMap[Stores, D]) extends Store {
    */
   def +(addr: Stores, d: D): MapStore = {
     map get addr match {
-      case Some(existingD) => new MapStore(map + ((addr, d join existingD)))
+      case Some(existingD) => new MapStore(map + ((addr, d.join(existingD))))
       case None => new MapStore(map + ((addr, d)))
     }
   }
@@ -327,21 +327,21 @@ case class SortedSetD(set: SortedSet[Value]) extends D {
 case class StoreSharp(val store: Store) extends Sharp {
 
   def resetChangeLog = {
-    if (store.isInstanceOf[SentinelStore])
+    if store.isInstanceOf[SentinelStore] then
       new StoreSharp(new SentinelStore(store.asInstanceOf[SentinelStore].store))
     else
       new StoreSharp(new SentinelStore(store))
   }
 
   def changeLog = {
-    if (store.isInstanceOf[SentinelStore])
+    if store.isInstanceOf[SentinelStore] then
       StoreUpdateDeltaSharp(store.asInstanceOf[SentinelStore].changeLog)
     else
       throw new Exception()
   }
 
   def wt(that: Sharp): Boolean = that match {
-    case StoreSharp(thatStore) => store wt thatStore
+    case StoreSharp(thatStore) => store.wt(thatStore)
     case _ => throw new Exception("Can't compare sharps!")
   }
 }
@@ -358,7 +358,7 @@ case class KTime(val last: List[Int]) extends Time {
 
 case object UniTime extends Time {
   def compare(that: Time) =
-    if (this eq that)
+    if this eq that then
       0
     else
       -1
@@ -369,14 +369,14 @@ case object UniTime extends Time {
 
 case class PrimAddr(val name: SName) extends Stores {
   def localCompare(that: Stores): Int = that match {
-    case PrimAddr(thatName) => this.name compare thatName
+    case PrimAddr(thatName) => this.name.compare(thatName)
   }
 }
 
 
 case class GlobalAddr(val name: SName) extends Stores {
   def localCompare(that: Stores): Int = that match {
-    case GlobalAddr(thatName) => this.name compare thatName
+    case GlobalAddr(thatName) => this.name.compare(thatName)
   }
 }
 

@@ -41,12 +41,12 @@ abstract class AnalysisRunner(opts: CFAOptions) extends FancyOutput {
       case AnalysisType.PDCFA => "-PDCFA"
     }
 
-    val analysis = if (opts.dummy) {
+    val analysis = if opts.dummy then {
       "dummy"
     } else {
-      opts.k
+      opts.k.toString
     }
-    val withGc = if (opts.gc) "-gc" else ""
+    val withGc = if opts.gc then "-gc" else ""
     analysis + cfa + withGc
   }
 
@@ -63,24 +63,24 @@ abstract class AnalysisRunner(opts: CFAOptions) extends FancyOutput {
     buffer.append("Total amount of variables: " + vars + "\n")
     buffer.append("Singletons: " + singletons + "\n")
     buffer.append("Analysis run for: " + time + " milliseconds\n")
-    if (interrupted) {
+    if interrupted then {
       buffer.append("Interrupted after " + opts.interruptAfter + " states.")
     }
 
-    if (isVerbose) {
+    if isVerbose then {
       println(buffer.toString)
     }
 
-    if (opts.dumpStatistics) {
+    if opts.dumpStatistics then {
       val statDir = new File(statisticsDirName)
-      if (!statDir.exists) {
+      if !statDir.exists then {
         statDir.mkdirs()
         statDir.createNewFile()
       }
 
       val subfolderPath = statisticsDirName + File.separator + StringUtils.trimFileName(opts.fileName)
       val subfolder = new File(subfolderPath)
-      if (!subfolder.exists) {
+      if !subfolder.exists then {
         subfolder.mkdirs()
         subfolder.createNewFile()
       }
@@ -88,7 +88,7 @@ abstract class AnalysisRunner(opts: CFAOptions) extends FancyOutput {
 
       val path = subfolderPath + File.separator + getStatisticsDumpFileName(opts)
       val file = new File(path)
-      if (!file.exists()) {
+      if !file.exists() then {
         file.createNewFile()
       }
       val writer = new FileWriter(file)

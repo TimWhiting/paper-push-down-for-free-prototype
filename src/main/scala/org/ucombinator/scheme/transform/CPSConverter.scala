@@ -39,7 +39,7 @@ class CPSConverter extends ProgramTransformer {
           case (restDefs, restExps) => {
             val lhs = d.name
             val rhs = d.value
-            if (isAtomic(rhs)) {
+            if isAtomic(rhs) then {
               k(VarDef(lhs, convertAtom(rhs)) :: restDefs, restExps)
             } else {
               k(VarDef(lhs, Unspecified()) :: restDefs, SetVar(lhs, rhs) :: restExps)
@@ -81,7 +81,7 @@ class CPSConverter extends ProgramTransformer {
       }
 
       case App(f: Prim, arguments) => {
-        App(f, arguments map convertAtom)
+        App(f, arguments `map` convertAtom)
       }
 
       // TODO: [ilya] check correctness of this

@@ -33,8 +33,8 @@ trait StackCESKMachinery extends CESKMachinery {
 
     // Application of lambda or reference
     case c@(PState(App(f@(Lambda(_, _) | Ref(_)), args), rho, s, kptr), k) =>
-      for {
-        Clo(lam@Lambda(Formals(params, _), body), rho1) <- atomicEval(f, rho, s)
+      for
+        case Clo(lam@Lambda(Formals(params, _), body), rho1) <- atomicEval(f, rho, s)
 
         // process lambda parameters
         paramNames = params.map(_.name)
@@ -46,7 +46,7 @@ trait StackCESKMachinery extends CESKMachinery {
 
         // In A-normal form only one expression in body
         e = getLambdaBodyInANF(lam)
-      } yield (PState(e, rho2, s1, kptr), k)
+      yield (PState(e, rho2, s1, kptr), k)
 
 
     //    case c@(PState(l@Let(_, _), rho, s, kptr), k)
@@ -81,7 +81,7 @@ trait StackCESKMachinery extends CESKMachinery {
       if isAtomic(ae) => {
       val boolValues = getBooleanValues(ae, rho, s)
       boolValues.map {
-        b => if (b) {
+        b => if b then {
           (PState(tBranch, rho1, s, kptr), k)
         } else {
           (PState(eBranch, rho1, s, kptr), k)
@@ -110,12 +110,12 @@ trait StackCESKMachinery extends CESKMachinery {
       // map atomic arguments to values (sets)
       val arg_vals = args.args.map(ae => atomicEval(ae.exp, rho, s))
       val setOfLists = toSetOfLists(arg_vals)
-      for {
+      for
         arg_vector <- setOfLists
         results = evalPrimApp(primName, arg_vector)
         result <- results
-        state = analyseResult(result, rho, s, app, kptr)
-      } yield (state, k)
+        state = analyzeResult(result, rho, s, app, kptr)
+      yield (state, k)
     }
 
 

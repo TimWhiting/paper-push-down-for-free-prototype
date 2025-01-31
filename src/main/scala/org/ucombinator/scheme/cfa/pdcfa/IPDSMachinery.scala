@@ -23,11 +23,11 @@ trait IPDSMachinery extends StateSpace with PDCFAGarbageCollector {
    * @return a set of paired control states and stack actions
    */
   def stepIPDS(q: Q, k: List[Frame], framesForGC: List[Frame]): Set[(StackAction[Frame], Q)] = {
-    val newQ: Q = (if (shouldGC) gc(q, framesForGC) else q)
-    for {
+    val newQ: Q = (if shouldGC then gc(q, framesForGC) else q)
+    for
       (q1, k_new) <- mnext(newQ, k)
       g = decideStackAction(k, k_new)
-    } yield (g, q1)
+    yield (g, q1)
   }
 
   def decideStackAction(k1: List[Frame], k2: List[Frame]): StackAction[Frame] = (k1, k2) match {

@@ -19,10 +19,10 @@ object DataUtil {
       case hd :: Nil => hd.map(x => List(x))
       case hd :: tail => {
         val rest = toSetOfLists(tail)
-        for {
+        for
           elem <- hd
           suffix <- rest
-        } yield (elem :: suffix)
+        yield (elem :: suffix)
       }
     }
   }

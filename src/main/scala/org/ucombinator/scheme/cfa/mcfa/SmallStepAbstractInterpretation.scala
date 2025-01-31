@@ -26,7 +26,7 @@ case class State(_flat: Flat, _sharp: Sharp) {
 
 trait Flat extends Ordered[Flat] {
   override def equals(that: Any) = that match {
-    case that: Flat => (this compare that) == 0
+    case that: Flat => this.compare(that) == 0
     case _ => false
   }
 }
@@ -76,8 +76,8 @@ trait SmallStepAbstractInterpretation {
 
   var dumpFileWriter: java.io.FileWriter = null
 
-  def dumpln(s: String) {
-    if (printStates) {
+  def dumpln(s: String) = {
+    if printStates then {
       dumpFileWriter.write(s)
       dumpFileWriter.write("\n")
     }
@@ -86,16 +86,16 @@ trait SmallStepAbstractInterpretation {
   var count = 0
   var globalSharp: Sharp = null
 
-  def runWithGlobalSharp(filename: String) {
-    if (printStates) {
+  def runWithGlobalSharp(filename: String) = {
+    if printStates then {
       val d = new File(tmpDirName)
-      if (!d.exists) {
+      if !d.exists then {
         d.mkdirs()
         d.createNewFile()
       }
       val path = dumpFilePath(StringUtils.trimFileName(filename))
       val file = new File(path)
-      if (!file.exists()) {
+      if !file.exists() then {
         file.createNewFile()
       }
       dumpFileWriter = new FileWriter(path)
@@ -111,7 +111,7 @@ trait SmallStepAbstractInterpretation {
     globalSharp = init.sharp
     var timeout = -1
 
-    while (!todo.isEmpty && timeout != 0) {
+    while !todo.isEmpty && timeout != 0 do {
       var newState = todo.head
       todo = todo.tail
 
@@ -120,20 +120,20 @@ trait SmallStepAbstractInterpretation {
 
       val lastSeenGeneration: Long = seen.getOrElse(flat, 0)
 
-      if (currentGeneration <= lastSeenGeneration) {
+      if currentGeneration <= lastSeenGeneration then {
         // println("Current generation: " + currentGeneration) // DEBUG
         // println("Last generation: " + lastSeenGeneration) // DEBUG
         // println("Not a new state: " + newState) // DEBUG
       }
 
-      if (currentGeneration > lastSeenGeneration) {
+      if currentGeneration > lastSeenGeneration then {
         // globalSharp changed since we last saw this flat.
-        if (timeout > 0)
+        if timeout > 0 then
           timeout -= 1
 
         count += 1
 
-        if (this.printStates)
+        if this.printStates then
           dumpFileWriter.write("State: " + newState + "\n\n")
 
         // Install the global sharp:
@@ -151,10 +151,10 @@ trait SmallStepAbstractInterpretation {
         seen(newState.flat) = currentGeneration
 
         // Check each successor for change:
-        for (succ <- succs) {
+        for succ <- succs do {
           var sharp = succ.sharp
           var delta = sharp.changeLog
-          if (!delta.isEmpty) {
+          if !delta.isEmpty then {
             // Something changed!
 
             // Bump up the current sharp generation:
@@ -168,10 +168,10 @@ trait SmallStepAbstractInterpretation {
       }
     }
 
-    if (timeout == 0)
+    if timeout == 0 then
       System.err.println("Timeout reached")
 
-    if (printStates) {
+    if printStates then {
       dumpFileWriter.close()
     }
   }

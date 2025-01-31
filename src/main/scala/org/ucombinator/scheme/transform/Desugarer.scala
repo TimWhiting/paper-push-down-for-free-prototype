@@ -122,7 +122,7 @@ class Desugarer(default: Boolean) extends ProgramTransformer {
         StructGet(this(base), field, ty)
 
       case App(f, arguments) =>
-        App(this(f), arguments map this.apply)
+        App(this(f), arguments `map` this.apply)
 
       case _ => throw new Exception("Unhandled expression: " + exp)
     }

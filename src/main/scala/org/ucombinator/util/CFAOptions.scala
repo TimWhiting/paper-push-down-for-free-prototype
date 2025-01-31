@@ -32,7 +32,7 @@ class CFAOptions {
 
 object CFAOptions {
 
-  def parse(args: List[String], opts: CFAOptions) {
+  def parse(args: List[String], opts: CFAOptions): Unit = {
     args match {
       case List() => {}
       case "--k" :: k :: rest => {

@@ -164,7 +164,7 @@ class ANormalizer extends ProgramTransformer {
           case (restDefs, restExps) => {
             val lhs = d.name
             val rhs = d.value
-            if (isAtomic(rhs)) {
+            if isAtomic(rhs) then {
               k(VarDef(lhs, normalizeAtom(rhs)) :: restDefs, restExps)
             } else {
               k(VarDef(lhs, Unspecified()) :: restDefs, SetVar(lhs, rhs) :: restExps)
@@ -178,7 +178,7 @@ class ANormalizer extends ProgramTransformer {
   def normalize(exp: Exp): Exp = normalizeExp(exp)(e => e)
 
   def normalize(body: Body): Body = {
-    if (convertBodyToLetRec) {
+    if convertBodyToLetRec then {
       ExpBody(normalize(body.toLetRec))
     } else {
       body match {
@@ -203,12 +203,12 @@ class ANormalizer extends ProgramTransformer {
       case Lambda(formals, body) =>
         Lambda(formals, normalize(body))
       case App(f, args) =>
-        App(normalizeAtom(f), args map normalizeAtom)
+        App(normalizeAtom(f), args.map(normalizeAtom))
 
       case StructGet(base, field, ty) =>
         StructGet(normalizeAtom(base), field, ty)
       case MakeStruct(ty, values) =>
-        MakeStruct(ty, values map normalizeAtom)
+        MakeStruct(ty, values.map(normalizeAtom))
 
       // TODO: [ilya] check correctness of this
       case And(exprs) =>
@@ -231,7 +231,7 @@ class ANormalizer extends ProgramTransformer {
       case Lambda(formals, body) =>
         Exp.let(Lambda(formals, normalize(body)))(k)
       case Closure(lam, ty, values) => {
-        val newLam = if (lam.isLambda) {
+        val newLam = if lam.isLambda then {
           normalizeAtom(lam)
         } else {
           normalize(lam)
@@ -306,13 +306,13 @@ class ANormalizer extends ProgramTransformer {
 
   def normalizeName(exp: Exp)(k: Exp => Exp): Exp =
     normalizeExp(exp)(exp =>
-      if (isAtomic(exp))
+      if isAtomic(exp) then
         k(normalize(exp))
       else
         Exp.let(normalize(exp))(k))
 
   def normalizeNames(exps: List[Exp])(k: List[Exp] => Exp): Exp =
-    if (exps.isEmpty)
+    if exps.isEmpty then
       k(Nil)
     else
       normalizeName(exps.head)(e =>
@@ -322,7 +322,7 @@ class ANormalizer extends ProgramTransformer {
 
   def normalizeLinearName(exp: Exp)(k: Exp => Exp): Exp = {
     normalizeExp(exp)(exp =>
-      if (isAtomic(exp))
+      if isAtomic(exp) then
         k(normalize(exp))
       else
         Exp.let(normalize(exp))(k))
@@ -330,7 +330,7 @@ class ANormalizer extends ProgramTransformer {
 
 
   def normalizeLinearNames(exps: List[Exp])(k: List[Exp] => Exp): Exp =
-    if (exps.isEmpty)
+    if exps.isEmpty then
       k(Nil)
     else
       normalizeLinearName(exps.head)(e =>
