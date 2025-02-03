@@ -11,7 +11,7 @@ do
     do
       ls $benchmark
       # 
-      sbt -J-Xmx4g -J-Xss256m "runMain org.ucombinator.cfa.RunCFA --kcfa --k $k --kalloc $policy $benchmark" 2>&1
+      target/scala-3.5.2/native/org.ucombinator.cfa.RunCFA --kcfa --k $k --kalloc $policy $benchmark 2>&1
     done
   done
 done
